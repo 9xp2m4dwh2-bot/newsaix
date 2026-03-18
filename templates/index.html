@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📰 글로벌 경제 뉴스</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #0a0c0f;
+    --surface: #111318;
+    --border:  #1e2128;
+    --accent:  #c8a84b;
+    --accent2: #4b8bc8;
+    --text:    #e8e4d9;
+    --muted:   #5a5f6e;
+    --green:   #3dba6f;
+    --red:     #e05252;
+    --tag-bg:  #161a22;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Serif KR', serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(200,168,75,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,168,75,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* HEADER */
+  header {
+    position: relative; z-index: 10;
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    background: rgba(10,12,15,0.95);
+    backdrop-filter: blur(12px);
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-size: 1.05rem; font-weight: 700; letter-spacing: 0.04em; color: var(--accent); }
+  .logo span { color: var(--text); font-weight: 400; }
+  .ticker-wrap { flex: 1; overflow: hidden; margin: 0 2rem; font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--muted); }
+  .ticker { display: inline-flex; gap: 2.5rem; animation: ticker 32s linear infinite; white-space: nowrap; }
+  @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+  .up { color: var(--green); } .down { color: var(--red); }
+
+  /* API BANNER */
+  #api-banner {
+    position: relative; z-index: 10;
+    background: linear-gradient(90deg, #1a1500, #120f00, #1a1500);
+    border-bottom: 1px solid #3a2e00;
+    padding: 9px 2rem;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    font-size: 0.82rem;
+  }
+  #api-banner label { color: var(--accent); font-weight: 700; white-space: nowrap; }
+  #api-key-input {
+    flex: 1; max-width: 380px;
+    background: rgba(0,0,0,0.4); border: 1px solid #3a2e00; border-radius: 4px;
+    padding: 6px 12px; color: var(--text); font-family: 'DM Mono', monospace;
+    font-size: 0.8rem; outline: none; transition: border-color 0.2s;
+  }
+  #api-key-input:focus { border-color: var(--accent); }
+  #api-key-input::placeholder { color: var(--muted); }
+  .api-hint { color: var(--muted); font-size: 0.74rem; }
+  .api-hint a { color: var(--accent2); text-decoration: none; }
+  .api-hint a:hover { text-decoration: underline; }
+
+  /* LAYOUT */
+  .container { position: relative; z-index: 1; display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 110px); }
+
+  /* SIDEBAR */
+  aside { border-right: 1px solid var(--border); padding: 1.5rem 0; background: rgba(17,19,24,0.6); }
+  .sidebar-title { font-size: 0.65rem; letter-spacing: 0.15em; color: var(--muted); padding: 0 1.2rem 0.8rem; text-transform: uppercase; font-family: 'DM Mono', monospace; }
+  .cat-btn {
+    display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 1.2rem;
+    background: none; border: none; color: var(--muted); font-family: 'Noto Serif KR', serif;
+    font-size: 0.85rem; cursor: pointer; text-align: left; transition: all 0.15s;
+    border-left: 2px solid transparent;
+  }
+  .cat-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+  .cat-btn.active { color: var(--accent); border-left-color: var(--accent); background: rgba(200,168,75,0.06); }
+  .cat-icon { width: 20px; text-align: center; }
+
+  /* MAIN */
+  main { padding: 2rem; overflow-y: auto; }
+  .main-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.5rem; gap: 1rem; }
+  .main-title { font-size: 1.5rem; font-weight: 900; letter-spacing: -0.01em; line-height: 1.2; }
+  .main-title small { display: block; font-size: 0.72rem; font-weight: 400; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: 0.05em; margin-top: 4px; }
+  .fetch-btn {
+    display: flex; align-items: center; gap: 8px; padding: 10px 20px;
+    background: var(--accent); color: #000; border: none; border-radius: 4px;
+    font-family: 'Noto Serif KR', serif; font-size: 0.85rem; font-weight: 700;
+    cursor: pointer; white-space: nowrap; transition: all 0.2s; flex-shrink: 0;
+  }
+  .fetch-btn:hover { background: #e0be5a; transform: translateY(-1px); }
+  .fetch-btn:disabled { background: var(--muted); cursor: not-allowed; transform: none; }
+
+  #status-bar { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--muted); margin-bottom: 1.5rem; min-height: 18px; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(0.8); } }
+
+  /* NEWS GRID */
+  #news-grid { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .news-card {
+    background: var(--surface); padding: 1.2rem 1.4rem;
+    display: grid; grid-template-columns: 36px 1fr; gap: 0 1rem;
+    transition: background 0.15s; animation: slideIn 0.3s ease both;
+  }
+  .news-card:hover { background: #161a22; }
+  @keyframes slideIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .card-num { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--accent); padding-top: 3px; font-weight: 500; }
+  .card-title { font-size: 0.97rem; font-weight: 700; line-height: 1.45; color: var(--text); margin-bottom: 5px; }
+  .card-orig { font-size: 0.74rem; color: var(--muted); font-family: 'DM Mono', monospace; margin-bottom: 7px; font-style: italic; }
+  .card-desc { font-size: 0.83rem; color: #9a96a0; line-height: 1.65; margin-bottom: 6px; }
+  .card-impact { font-size: 0.83rem; color: #7abfff; line-height: 1.65; margin-bottom: 8px; }
+  .card-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .tag { display: inline-block; padding: 2px 8px; background: var(--tag-bg); border: 1px solid var(--border); border-radius: 2px; font-size: 0.68rem; font-family: 'DM Mono', monospace; color: var(--muted); }
+
+  /* EMPTY */
+  #empty-state { text-align: center; padding: 5rem 2rem; color: var(--muted); }
+  #empty-state .big { font-size: 3rem; margin-bottom: 1rem; }
+  #empty-state p { font-size: 0.9rem; line-height: 1.8; }
+
+  /* SKELETON */
+  .skeleton { background: linear-gradient(90deg, var(--surface) 25%, #161b24 50%, var(--surface) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 3px; height: 14px; margin-bottom: 8px; }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  /* RESPONSIVE */
+  @media (max-width: 700px) {
+    .container { grid-template-columns: 1fr; }
+    aside { border-right: none; border-bottom: 1px solid var(--border); padding: 0.6rem 0; display: flex; overflow-x: auto; }
+    .sidebar-title { display: none; }
+    .cat-btn { white-space: nowrap; border-left: none; border-bottom: 2px solid transparent; padding: 8px 14px; }
+    .cat-btn.active { border-bottom-color: var(--accent); border-left-color: transparent; }
+    main { padding: 1rem; }
+    .ticker-wrap { display: none; }
+    #api-banner { gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">📰 <span>글로벌 경제</span> NEWS</div>
+  <div class="ticker-wrap">
+    <div class="ticker">
+      <span>S&P 500 <span class="up">▲ 0.42%</span></span>
+      <span>KOSPI <span class="down">▼ 0.11%</span></span>
+      <span>USD/KRW <span class="up">▲ 1,328</span></span>
+      <span>WTI <span class="down">▼ $72.4</span></span>
+      <span>BTC <span class="up">▲ $83,200</span></span>
+      <span>금(Gold) <span class="up">▲ $2,942</span></span>
+      <span>나스닥 <span class="up">▲ 0.31%</span></span>
+      <span>DAX <span class="down">▼ 0.08%</span></span>
+      <!-- 무한루프용 복사 -->
+      <span>S&P 500 <span class="up">▲ 0.42%</span></span>
+      <span>KOSPI <span class="down">▼ 0.11%</span></span>
+      <span>USD/KRW <span class="up">▲ 1,328</span></span>
+      <span>WTI <span class="down">▼ $72.4</span></span>
+      <span>BTC <span class="up">▲ $83,200</span></span>
+      <span>금(Gold) <span class="up">▲ $2,942</span></span>
+      <span>나스닥 <span class="up">▲ 0.31%</span></span>
+      <span>DAX <span class="down">▼ 0.08%</span></span>
+    </div>
+  </div>
+</header>
+
+<div id="api-banner">
+  <label>🔑 Anthropic API 키</label>
+  <input id="api-key-input" type="password" placeholder="sk-ant-api03-..." autocomplete="off">
+  <span class="api-hint">
+    키가 없으면 <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>에서 발급
+    &nbsp;·&nbsp; 키는 서버로 전송되지 않으며 브라우저에서만 사용됩니다
+  </span>
+</div>
+
+<div class="container">
+  <aside>
+    <div class="sidebar-title">카테고리</div>
+    <button class="cat-btn active" data-cat="global"><span class="cat-icon">🌍</span> 글로벌 경제</button>
+    <button class="cat-btn" data-cat="us"><span class="cat-icon">🇺🇸</span> 미국 경제</button>
+    <button class="cat-btn" data-cat="stock"><span class="cat-icon">📈</span> 주식·증시</button>
+    <button class="cat-btn" data-cat="rates"><span class="cat-icon">🏦</span> 중앙은행·금리</button>
+    <button class="cat-btn" data-cat="energy"><span class="cat-icon">🛢️</span> 원자재·에너지</button>
+    <button class="cat-btn" data-cat="tech"><span class="cat-icon">🤖</span> AI·테크 산업</button>
+    <button class="cat-btn" data-cat="asia"><span class="cat-icon">🌏</span> 아시아 경제</button>
+  </aside>
+
+  <main>
+    <div class="main-header">
+      <div class="main-title">
+        <span id="cat-label">🌍 글로벌 경제</span>
+        <small id="update-time">카테고리 선택 후 뉴스 가져오기를 눌러주세요</small>
+      </div>
+      <button class="fetch-btn" id="fetch-btn">⚡ 뉴스 가져오기</button>
+    </div>
+    <div id="status-bar"></div>
+    <div id="news-grid">
+      <div id="empty-state">
+        <div class="big">📡</div>
+        <p>카테고리를 선택하고<br><strong>뉴스 가져오기</strong> 버튼을 누르세요.<br><br>
+        Claude AI가 실시간으로 뉴스를 검색하고<br>한국어로 번역해드립니다.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const CATEGORIES = {
+  global: { label: "🌍 글로벌 경제",   query: "global economy major news today 2026" },
+  us:     { label: "🇺🇸 미국 경제",    query: "US economy major news today 2026" },
+  stock:  { label: "📈 주식·증시",      query: "stock market major news today 2026" },
+  rates:  { label: "🏦 중앙은행·금리", query: "central bank interest rate monetary policy news today 2026" },
+  energy: { label: "🛢️ 원자재·에너지", query: "oil commodities energy market news today 2026" },
+  tech:   { label: "🤖 AI·테크 산업",  query: "AI tech industry economy news today 2026" },
+  asia:   { label: "🌏 아시아 경제",   query: "Asia economy major news today 2026" },
+};
+
+let currentCat = "global";
+
+document.querySelectorAll(".cat-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentCat = btn.dataset.cat;
+    document.getElementById("cat-label").textContent = CATEGORIES[currentCat].label;
+    document.getElementById("update-time").textContent = "뉴스 가져오기를 누르세요";
+  });
+});
+
+document.getElementById("fetch-btn").addEventListener("click", fetchNews);
+
+async function fetchNews() {
+  const apiKey = document.getElementById("api-key-input").value.trim();
+  if (!apiKey) {
+    alert("상단에 Anthropic API 키를 입력해주세요.\nconsole.anthropic.com 에서 발급받을 수 있어요.");
+    return;
+  }
+
+  const info = CATEGORIES[currentCat];
+  const btn = document.getElementById("fetch-btn");
+  btn.disabled = true;
+  btn.textContent = "⏳ 수집 중...";
+  setStatus("loading", "Claude AI가 뉴스를 검색하고 있습니다...");
+  showSkeletons();
+
+  const SYSTEM = `당신은 세계 경제 전문 뉴스 에디터입니다.
+웹 검색으로 오늘 기준 최신 경제 뉴스를 수집하고, 반드시 순수 JSON 배열만 반환하세요. 마크다운, 설명, 코드블록 없이 [ 로 시작하는 JSON만 출력하세요.
+
+형식:
+[
+  {
+    "title": "한국어로 번역된 뉴스 제목",
+    "title_orig": "원문 영어 제목",
+    "desc": "한국어로 번역된 핵심 내용 2~3문장. 수치(%, $, 금리 등) 포함.",
+    "source": "출처 매체명",
+    "impact": "이 뉴스가 시장에 미치는 영향 한 문장 (한국어)"
+  }
+]
+
+중요도 높은 뉴스 7~10개 선별. JSON 배열만 반환.`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-beta": "web-search-2025-03-05",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 3000,
+        system: SYSTEM,
+        tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }],
+        messages: [{
+          role: "user",
+          content: `"${info.label}" 분야의 오늘 가장 중요한 글로벌 경제 뉴스를 웹에서 검색해서 JSON으로 반환해줘. 검색어: ${info.query}`
+        }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const text = data.content.filter(b => b.type === "text").map(b => b.text).join("");
+    const match = text.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error("뉴스 데이터를 파싱할 수 없습니다. 다시 시도해주세요.");
+    const articles = JSON.parse(match[0]);
+
+    renderNews(articles);
+    const now = new Date().toLocaleString("ko-KR");
+    document.getElementById("update-time").textContent = `${now} 업데이트 · ${articles.length}건`;
+    setStatus("done", `${articles.length}건의 뉴스를 성공적으로 가져왔습니다.`);
+
+  } catch(e) {
+    setStatus("error", "오류: " + e.message);
+    document.getElementById("news-grid").innerHTML = `
+      <div id="empty-state">
+        <div class="big">⚠️</div>
+        <p><strong>${esc(e.message)}</strong><br><br>API 키를 확인하거나 잠시 후 다시 시도해주세요.</p>
+      </div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "⚡ 뉴스 가져오기";
+  }
+}
+
+function renderNews(articles) {
+  const grid = document.getElementById("news-grid");
+  grid.innerHTML = "";
+  articles.forEach((a, i) => {
+    const card = document.createElement("div");
+    card.className = "news-card";
+    card.style.animationDelay = `${i * 0.05}s`;
+    card.innerHTML = `
+      <div class="card-num">${String(i+1).padStart(2,"0")}</div>
+      <div>
+        <div class="card-title">${esc(a.title)}</div>
+        ${a.title_orig ? `<div class="card-orig">${esc(a.title_orig)}</div>` : ""}
+        ${a.desc   ? `<div class="card-desc">${esc(a.desc)}</div>` : ""}
+        ${a.impact ? `<div class="card-impact">▶ ${esc(a.impact)}</div>` : ""}
+        <div class="card-meta">${a.source ? `<span class="tag">${esc(a.source)}</span>` : ""}</div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function showSkeletons() {
+  document.getElementById("news-grid").innerHTML = Array.from({length:6},(_,i)=>`
+    <div class="news-card" style="animation-delay:${i*0.08}s">
+      <div class="card-num" style="color:var(--muted)">${String(i+1).padStart(2,"0")}</div>
+      <div style="width:100%">
+        <div class="skeleton" style="width:78%;height:16px"></div>
+        <div class="skeleton" style="width:42%;height:11px;margin-top:10px"></div>
+        <div class="skeleton" style="width:96%"></div>
+        <div class="skeleton" style="width:68%"></div>
+      </div>
+    </div>`).join("");
+}
+
+function setStatus(type, msg) {
+  const bar = document.getElementById("status-bar");
+  const icon = type==="loading" ? `<div class="dot"></div>` : type==="done" ? `<span style="color:var(--green)">✓</span>` : `<span style="color:var(--red)">✗</span>`;
+  bar.innerHTML = `${icon} ${msg}`;
+}
+
+function esc(s) {
+  if (!s) return "";
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+</script>
+</body>
+</html>
